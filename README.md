@@ -19,3 +19,8 @@ You should then be presented by a menu to select a torrent
   Ubuntu 16.10 LTS [Yakkety Yak][Unity][x32 i386][Desktop][ISO][Uzerus] By Uzerus
 ```
 You can then select a torrent of which it will be downloaded
+
+## Roadmap
+- [ ] Add support for more sources
+- [ ] Learn how go modules actually work
+- [ ] Add more info to torrents
