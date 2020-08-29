@@ -2,43 +2,62 @@ package sources
 
 import (
 	"fmt"
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/PuerkitoBio/goquery"
+	"github.com/pkg/browser"
 	"github.com/urfave/cli/v2"
+	"strconv"
+	"strings"
 )
 
 func LEET(c *cli.Context) error {
 	searchTerm := c.Args().Get(0)
 
 	url := "https://1337x.to/search/" + searchTerm + "/1/"
-	var selections []string
+	var selections []Torrent
 	doc := DocumentFromURL(url)
 
 	doc.Find("tbody").First().Children().Each(func(i int, selection *goquery.Selection) {
+		torrent := Torrent{}
 		torrentName := selection.Find(".name").Last().Text()
+		torrent.name = torrentName
+		torrent.author = selection.Find(".coll-5").First().Children().First().Text()
+		torrent.seeders, _ = strconv.Atoi(selection.Find(".coll-2").First().Text())
+		torrent.leechers, _ = strconv.Atoi(selection.Find(".coll-3").First().Text())
+		size := selection.Find(".coll-4").First().Text()
+		size = size[:strings.Index(size, "B")+1]
+		size = strings.Replace(size, " ", "", -1)
+		torrent.size = size
+		href, _ := selection.Find(".coll-1").Children().Eq(1).Attr("href")
+		torrent.pageURL = "https://1337x.to" + href
 
-		if len(torrentName) > 85 {
-			torrentName = torrentName[:85] + "..."
-		}
-
-		torrentAuthor := selection.Find(".coll-5").First().Children().First().Text()
-
-		torrentName = torrentName + " By " + torrentAuthor
-		selections = append(selections, torrentName)
+		selections = append(selections, torrent)
 	})
 	if len(selections) == 0 {
 		return cli.Exit("There is no found torrents", 69)
 	}
 
-	index, err := DisplayMenu(selections)
-	if err != nil {
-		return cli.Exit("Could not display menu", 69)
+	index := DisplayMenu(selections)
+	fmt.Print("\n")
+	selectedTorrent := selections[index]
+	response := ""
+	survey.AskOne(&survey.Select{Message: "What do you want to do?", Options: []string{"Download", "Goto Torrent Page", "Cancel"}}, &response)
+
+	switch response {
+	case "Cancel":
+		cli.Exit("User cancelled", 0)
+		break
+
+	case "Goto Torrent Page":
+		browser.OpenURL(selectedTorrent.pageURL)
+		break
+
+	case "Download":
+		magnet := leetGetTorrent(selectedTorrent.pageURL)
+
+		DownloadFile(magnet)
 	}
 
-	attr, _ := doc.Find("tbody").First().Children().Eq(index).Children().First().Children().Eq(1).Attr("href")
-	magnet := leetGetTorrent("https://1337x.to" + attr)
-
-	DownloadFile(magnet)
-	fmt.Println(magnet)
 	return nil
 }
 

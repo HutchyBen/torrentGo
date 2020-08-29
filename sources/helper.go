@@ -1,26 +1,13 @@
 package sources
 
 import (
-	"bufio"
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/anacrolix/torrent"
-	"golang.org/x/net/html/charset"
-	"github.com/AlecAivazis/survey/v2"
-	"io"
 	"log"
 	"net/http"
+	"strconv"
 )
-
-func detectContentCharset(body io.Reader) string {
-	r := bufio.NewReader(body)
-	if data, err := r.Peek(1024); err == nil {
-		if _, name, ok := charset.DetermineEncoding(data, ""); ok {
-			return name
-		}
-	}
-	return "utf-8"
-}
-
 
 func DocumentFromURL(url string) *goquery.Document {
 	resp, err := http.Get(url)
@@ -30,7 +17,6 @@ func DocumentFromURL(url string) *goquery.Document {
 	}
 	defer resp.Body.Close()
 
-
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
 		log.Fatal(err)
@@ -39,10 +25,31 @@ func DocumentFromURL(url string) *goquery.Document {
 	return doc
 }
 
-func DisplayMenu(items []string) (int,error) {
+func GetDisplayName(torrent Torrent) string {
+	data := ""
+	if len(torrent.name) > 70 {
+		data += torrent.name[:70]
+	} else {
+		data += torrent.name
+	}
+
+	data += " By " + torrent.author
+	data += " Size: " + torrent.size
+	data += " S: " + strconv.Itoa(torrent.seeders)
+	data += " L: " + strconv.Itoa(torrent.leechers)
+	return data
+}
+
+func DisplayMenu(items []Torrent) int {
+	var displayed []string
+
+	for _, v := range items {
+		displayed = append(displayed, GetDisplayName(v))
+	}
+
 	prompt := &survey.Select{
 		Message: "Choose a torrent:",
-		Options: items,
+		Options: displayed,
 	}
 	var choice string
 
@@ -50,13 +57,13 @@ func DisplayMenu(items []string) (int,error) {
 
 	var index int
 	for i, v := range items {
-		if v == choice {
+		if GetDisplayName(v) == choice {
 			index = i
 			break
 		}
 	}
 
-	return index, nil
+	return index
 }
 
 func DownloadFile(url string) {
