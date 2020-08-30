@@ -94,7 +94,7 @@ func leetMakeURL(search string, sorting string, category string) (string, string
 	}
 
 	if category == "" {
-		// ok so its 2 pm and i dont know if this is smart
+		// ok so its 2 am and i dont know if this is smart
 	} else if category == "tv" || category == "xxx" {
 		url += "/" + strings.ToUpper(category)
 	} else {
