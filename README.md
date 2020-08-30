@@ -23,4 +23,5 @@ You can then select a torrent of which it will be downloaded
 ## Roadmap
 - [ ] Add support for more sources
 - [ ] Learn how go modules actually work
-- [ ] Add more info to torrents
+- [x] Add more info to torrents
+- [ ] Add support for more pages to 1337x

@@ -1,6 +1,7 @@
 package sources
 
 import (
+	"fmt"
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/anacrolix/torrent"
@@ -67,6 +68,7 @@ func DisplayMenu(items []Torrent) int {
 }
 
 func DownloadFile(url string) {
+	fmt.Println("It may look like the download is stuck")
 	c, _ := torrent.NewClient(nil)
 	defer c.Close()
 	t, _ := c.AddMagnet(url)

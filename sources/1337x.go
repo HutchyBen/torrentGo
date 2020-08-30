@@ -13,7 +13,14 @@ import (
 func LEET(c *cli.Context) error {
 	searchTerm := c.Args().Get(0)
 
-	url := "https://1337x.to/search/" + searchTerm + "/1/"
+	category := c.String("category")
+	sorting := c.String("sort")
+
+	url, err := leetMakeURL(searchTerm, sorting, category)
+	if err != "" {
+		return cli.Exit(err, 69)
+	}
+
 	var selections []Torrent
 	doc := DocumentFromURL(url)
 
@@ -45,7 +52,7 @@ func LEET(c *cli.Context) error {
 
 	switch response {
 	case "Cancel":
-		cli.Exit("User cancelled", 0)
+		return cli.Exit("User cancelled", 0)
 		break
 
 	case "Goto Torrent Page":
@@ -59,6 +66,74 @@ func LEET(c *cli.Context) error {
 	}
 
 	return nil
+}
+
+func leetMakeURL(search string, sorting string, category string) (string, string) {
+	url := "https://1337x.to/"
+
+	if sorting != "" {
+		url += "sort-"
+	}
+
+	if category != "" {
+		url += "category-"
+	}
+
+	url += "search/" + search
+	category = strings.ToLower(category)
+	isValid := false
+	for _, v := range []string{"tv", "movies", "games", "music", "applications", "anime", "xxx", "other", "documentaries", ""} {
+		if category == v {
+			isValid = true
+			break
+		}
+	}
+
+	if !isValid {
+		return "", "Not a correct category"
+	}
+
+	if category == "" {
+		// ok so its 2 pm and i dont know if this is smart
+	} else if category == "tv" || category == "xxx" {
+		url += "/" + strings.ToUpper(category)
+	} else {
+		category = strings.ToUpper(string(category[0])) + category[1:]
+		url += "/" + category
+	}
+
+	isValid = false
+	sorting = strings.ToLower(sorting)
+	for _, v := range []string{"sizea", "sized", "timea", "timed", "seedersa", "seedersd", "leechersa", "leechersd", ""} {
+		if sorting == v {
+			isValid = true
+			break
+		}
+
+	}
+	if !isValid {
+		return "", "Not a valid sorting"
+	}
+
+	if sorting == "" {
+		url += "/"
+	} else {
+		sortingName := sorting[:len(sorting)-1]
+
+		url += "/" + sortingName
+
+		order := sorting[len(sorting)-1:]
+
+		if order == "a" {
+			url += "/asc/"
+		} else {
+			url += "/desc/"
+		}
+	}
+
+	url += "1/"
+
+	return url, ""
 }
 
 func leetGetTorrent(url string) string {
