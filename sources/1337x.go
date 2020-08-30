@@ -10,20 +10,32 @@ import (
 	"strings"
 )
 
+var page int
+
 func LEET(c *cli.Context) error {
+	page = 1
 	searchTerm := c.Args().Get(0)
 
 	category := c.String("category")
 	sorting := c.String("sort")
-
 	url, err := leetMakeURL(searchTerm, sorting, category)
 	if err != "" {
 		return cli.Exit(err, 69)
 	}
+	out := leetMain(url, 1)
+	if out != nil {
+		return out
+	}
+
+	return cli.Exit("Program finished successfully  (probably)", 0)
+}
+
+func leetMain(baseurl string, page int) cli.ExitCoder {
 
 	var selections []Torrent
-	doc := DocumentFromURL(url)
 
+	doc := DocumentFromURL(baseurl + strconv.Itoa(page) + "/")
+	// Fetch all torrents on page
 	doc.Find("tbody").First().Children().Each(func(i int, selection *goquery.Selection) {
 		torrent := Torrent{}
 		torrentName := selection.Find(".name").Last().Text()
@@ -44,11 +56,21 @@ func LEET(c *cli.Context) error {
 		return cli.Exit("There is no found torrents", 69)
 	}
 
-	index := DisplayMenu(selections)
+	// Check if there is other pages to be navigated
+	foward := doc.Find(".last").Size() > 0
+
+	index := DisplayMenu(baseurl, &page, foward, selections)
 	fmt.Print("\n")
+
+	if index == 999 {
+		return leetMain(baseurl, page)
+	} else if index == 1000 {
+		return leetMain(baseurl, page)
+	}
+
 	selectedTorrent := selections[index]
 	response := ""
-	survey.AskOne(&survey.Select{Message: "What do you want to do?", Options: []string{"Download", "Goto Torrent Page", "Cancel"}}, &response)
+	survey.AskOne(&survey.Select{Message: "What do you want to do?", Options: []string{"Download", "Goto Torrent Page", "Back", "Cancel"}}, &response)
 
 	switch response {
 	case "Cancel":
@@ -63,6 +85,9 @@ func LEET(c *cli.Context) error {
 		magnet := leetGetTorrent(selectedTorrent.pageURL)
 
 		DownloadFile(magnet)
+
+	case "Back":
+		return leetMain(baseurl, page)
 	}
 
 	return nil
@@ -130,8 +155,6 @@ func leetMakeURL(search string, sorting string, category string) (string, string
 			url += "/desc/"
 		}
 	}
-
-	url += "1/"
 
 	return url, ""
 }

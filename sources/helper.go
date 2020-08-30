@@ -41,11 +41,20 @@ func GetDisplayName(torrent Torrent) string {
 	return data
 }
 
-func DisplayMenu(items []Torrent) int {
+func DisplayMenu(baseURL string, page *int, forw bool, items []Torrent) int {
 	var displayed []string
+
+	if *page > 1 {
+		displayed = append(displayed, ">>>BACK<<<")
+	}
 
 	for _, v := range items {
 		displayed = append(displayed, GetDisplayName(v))
+	}
+
+	if forw {
+		displayed = append(displayed, ">>>FORWARD<<<")
+
 	}
 
 	prompt := &survey.Select{
@@ -55,7 +64,14 @@ func DisplayMenu(items []Torrent) int {
 	var choice string
 
 	survey.AskOne(prompt, &choice)
-
+	fmt.Println(choice == ">>>FORWARD<<<")
+	if choice == ">>>FORWARD<<<" {
+		*page++
+		return 1000
+	} else if choice == ">>>BACK<<<" {
+		*page--
+		return 999
+	}
 	var index int
 	for i, v := range items {
 		if GetDisplayName(v) == choice {
