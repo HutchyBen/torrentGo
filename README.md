@@ -1,5 +1,5 @@
 # torrentGo
-This tool is created to download torrents for several sources (not several rn). It is made to be simple to use and doesn't require a BitTorrent client as it as it uses [a built in BitTorrent client](https://github.com/anacrolix/torrent) 
+This tool is created to download torrents for several sources (not several rn). It is made to be simple to use and doesn't require a like a actual program BitTorrent client like transmission or qbittorent as it as it uses [a built in BitTorrent client](https://github.com/anacrolix/torrent) 
 
 ## Setup
 The only needed thing you will need to do is to build the project with `go build`. It should then be ready to use.
